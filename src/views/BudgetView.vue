@@ -1,6 +1,17 @@
 <script setup lang="ts">
 import BudgetPage from "../components/BudgetPage.vue"
 import ExpensePage from "../components/ExpensePage.vue"
+import type { budgetType } from "@/types/budgetTypes"
+import { useBudgetStore } from "@/stores/budgetStore"
+import { storeToRefs } from "pinia"
+import { useRoute } from "vue-router"
+
+const Route = useRoute();
+const id : any = Route.params.id;
+const budgetStore = useBudgetStore();
+const { budgetDetail, expenseName, expenseAmount } = storeToRefs(budgetStore);
+
+budgetStore.getBudget(id);
 </script>
 
 <template>
@@ -11,21 +22,21 @@ import ExpensePage from "../components/ExpensePage.vue"
       </div>
       <div class="row mb-4">
         <div class="col-12 col-md-5 mb-3 mb-md-0">
-          <!-- <BudgetPage /> -->
+          <BudgetPage :budget="budgetDetail" :wantDelete=true />
         </div>
         <div class="col-12 col-md-7">
           <div class="card shadow p-3 rounded-3">
             <div class="card-body p-3 border-2 border-dark rounded-3" style="border: dashed">
-              <h3 class="card-title fw-bolder mb-4">Add New <span class="text-info">coffee</span> Expense</h3>
-              <form action="">
+              <h3 class="card-title fw-bolder mb-4">Add New <span class="text-info">{{ budgetDetail.name }}</span> Expense</h3>
+              <form @submit.prevent="budgetStore.addExpenseOnDetail($event, budgetDetail)">
                 <div class="row">
                   <div class="col-12 col-md-6 mb-3">
-                    <label for="budget" class="form-label fw-bold mb-2">Expense Name</label>
-                    <input type="text" id="budget" class="form-control py-2" placeholder="e.g., Coffee">
+                    <label for="expenseName" class="form-label fw-bold mb-2">Expense Name</label>
+                    <input type="text" id="expenseName" class="form-control py-2" placeholder="e.g., Coffee" v-model="expenseName" required>
                   </div>
                   <div class="col-12 col-md-6 mb-3">
-                    <label for="amount" class="form-label fw-bold mb-2">Amount</label>
-                    <input type="text" id="budget" class="form-control py-2" placeholder="e.g., $3.00">
+                    <label for="expenseAmount" class="form-label fw-bold mb-2">Amount</label>
+                    <input type="number" id="expenseAmount" class="form-control py-2" step="0.01" placeholder="e.g., $3.00" v-model="expenseAmount" required>
                   </div>
                 </div>
                 <button class="btn btn-dark px-4 py-2">
@@ -52,9 +63,11 @@ import ExpensePage from "../components/ExpensePage.vue"
                   </tr>
               </thead>
               <tbody class="align-middle">
-                <tr class="lead">
-                  <ExpensePage />
-                </tr>
+                <TransitionGroup appear name="expense">
+                  <tr class="lead" v-for="(expense, index) in budgetDetail.expenses" :key="index">
+                    <ExpensePage :expense="expense" :wantDelete="true" />
+                  </tr>
+                </TransitionGroup>
               </tbody>
             </table>
           </div>

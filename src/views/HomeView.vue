@@ -6,10 +6,12 @@ import ExpensePage from "../components/ExpensePage.vue"
 import { useBudgetStore } from '../stores/budgetStore'
 
 const budgetStore = useBudgetStore();
-const { isNewAccount, isAuth, mail, pass, budgetAmount, budgetName, budgets } = storeToRefs(budgetStore);
+const { oldUser, isNewAccount, isAuth, mail, pass, currentUser, budgetAmount, budgetName, budgets, budgetsNameList, budgetChoose, expenses, expenseAmount, expenseName } = storeToRefs(budgetStore);
+budgetStore.resetInput();
 
 watchEffect(async() => {
   await budgetStore.getBudgets();
+  await budgetStore.getExpenses();
 })
 </script>
 
@@ -44,7 +46,7 @@ watchEffect(async() => {
 
     <div v-else class="container-xl py-4">
       <div class="row mb-3">
-        <h2 class="fw-bold display-5">Welcome back, <span class="text-info">{{ mail }}</span></h2>
+        <h2 class="fw-bold display-5">Welcome<span v-if="oldUser"> back</span>, <span class="text-info">{{ currentUser }}</span></h2>
         <div v-if="false">
           <p class="lead my-3">Personal budgeting is the secret to financial freedom.</p>
           <p class="lead">Create a budget to get started!</p>
@@ -57,12 +59,12 @@ watchEffect(async() => {
               <h3 class="card-title fw-bolder mb-4">Create budget</h3>
               <form @submit.prevent="budgetStore.createBudget($event)">
                 <div class="form-group mb-3">
-                  <label for="budget" class="form-label fw-bold mb-2">Budget Name</label>
-                  <input type="text" id="budget" class="form-control py-2" placeholder="e.g., Groceries" v-model="budgetName" required>
+                  <label for="budgetName" class="form-label fw-bold mb-2">Budget Name</label>
+                  <input type="text" id="budgetName" class="form-control py-2" placeholder="e.g., Groceries" v-model="budgetName" required>
                 </div>
                 <div class="form-group mb-3">
-                  <label for="amount" class="form-label fw-bold mb-2">Amount</label>
-                  <input type="number" id="budget" class="form-control py-2" placeholder="e.g., $300" v-model="budgetAmount" required>
+                  <label for="budgetAmount" class="form-label fw-bold mb-2">Amount</label>
+                  <input type="number" id="budgetAmount" class="form-control py-2" step="0.1" placeholder="e.g., $300" v-model="budgetAmount" required>
                 </div>
                 <button class="btn btn-dark px-4 py-2">
                   Create budget
@@ -75,24 +77,23 @@ watchEffect(async() => {
         <div v-if="budgets.length" class="col-12 col-md-6">
           <div class="card shadow p-3 rounded-3">
             <div class="card-body p-3 border-2 border-dark rounded-3" style="border: dashed">
-              <h3 class="card-title fw-bolder mb-4">Add New <span class="text-info">coffee</span> Expense</h3>
-              <form action="">
+              <h3 class="card-title fw-bolder mb-4">Add New <span class="text-info" v-if="budgetsNameList.length === 1">{{ budgetChoose }}</span> Expense</h3>
+              <form @submit.prevent="budgetStore.addExpense($event)">
                 <div class="row">
                   <div class="col-12 col-md-6 mb-3">
-                    <label for="budget" class="form-label fw-bold mb-2">Expense Name</label>
-                    <input type="text" id="budget" class="form-control py-2" placeholder="e.g., Coffee">
+                    <label for="expenseName" class="form-label fw-bold mb-2">Expense Name</label>
+                    <input type="text" id="expenseName" class="form-control py-2" placeholder="e.g., Coffee" v-model="expenseName" required>
                   </div>
                   <div class="col-12 col-md-6 mb-3">
-                    <label for="amount" class="form-label fw-bold mb-2">Amount</label>
-                    <input type="number" id="budget" class="form-control py-2" placeholder="e.g., $3.00">
+                    <label for="expenseAmount" class="form-label fw-bold mb-2">Amount</label>
+                    <input type="number" id="expenseAmount" class="form-control py-2" step="0.01" placeholder="e.g., $3.00" v-model="expenseAmount" required>
                   </div>
                 </div>
-                <div v-if="false" class="row mb-3">
+                <div v-if="budgetsNameList.length > 1" class="row mb-3">
                   <div class="col">
                     <label for="category" class="form-label fw-bold mb-2">Budget Category</label>
-                    <select name="category" id="category" class="form-select">
-                      <option value="man">man</option>
-                      <option value="coffee">coffee</option>
+                    <select name="category" id="category" class="form-select" v-model="budgetChoose">
+                      <option :value="budgetNameList" v-for="budgetNameList in budgetsNameList" :key="budgetNameList">{{ budgetNameList }}</option>
                     </select>
                   </div>
                 </div>
@@ -107,11 +108,13 @@ watchEffect(async() => {
       </div>
       <div v-if="budgets.length"  class="row flex-wrap mb-4">
         <h2 class="fw-bold display-5 mb-4">Existing Budgets</h2>
-        <div class="col mb-3" style="min-width: 30%; max-width: 60%;" v-for="budget in budgets" :key="budget.id">
-          <BudgetPage :budget="budget" />
-        </div>
+        <TransitionGroup appear name="budget">
+          <div class="col-12 col-md-6 col-lg-4 mb-3" v-for="budget in budgets" :key="budget.id">
+            <BudgetPage :budget="budget" :wantDelete=false />
+          </div>
+        </TransitionGroup>
       </div>
-      <div v-if="budgets.length" class="row mb-4">
+      <div v-if="expenses.length" class="row mb-4">
         <h2 class="fw-bold display-5 mb-4">Recent Expenses</h2>
         <div class="col px-0 px-md-5">
           <div class="card border-0 overflow-auto">
@@ -126,9 +129,11 @@ watchEffect(async() => {
                   </tr>
               </thead>
               <tbody class="align-middle">
-                <tr class="lead">
-                  <ExpensePage />
-                </tr>
+                <TransitionGroup appear name="expense">
+                  <tr class="lead" v-for="(expense, index) in expenses" :key="index" tag="tr">
+                    <ExpensePage :expense="expense" :wantDelete="false"/>
+                  </tr>
+                </TransitionGroup>
               </tbody>
             </table>
           </div>
@@ -137,3 +142,10 @@ watchEffect(async() => {
     </div>
   </main>
 </template>
+
+<style scoped>
+.expense-move,
+.budget-move {
+  transition: all 0.3s linear;
+}
+</style>

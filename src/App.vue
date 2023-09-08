@@ -12,7 +12,7 @@ const budgetStore = useBudgetStore();
         <img src="/logo.png" alt="logo" class="img-fluid" width="50">
         <h1 class="ms-1 mb-0 fw-bolder text-info display-4">Budget App</h1>
       </RouterLink>
-      <div v-if="budgetStore.isAuth">
+      <div v-if="budgetStore.isAuth" class="mt-3 mt-md-0">
         <button class="btn btn-outline-warning border-2 d-inline-flex align-items-center me-3" @click="budgetStore.logOut">
           <p class="lead mb-0 me-2">Sign Out</p>
           <i class="bi bi-box-arrow-right"></i>

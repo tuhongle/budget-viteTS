@@ -1,7 +1,10 @@
 export interface expenseType {
     name: string,
     amount: number,
-    createdAt: string
+    createdAt: string,
+    budgetID: string,
+    budgetName: string,
+    budgetColor: string
 }
 
 export interface budgetType {
