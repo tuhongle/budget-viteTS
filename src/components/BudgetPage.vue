@@ -13,11 +13,11 @@
                 <p class="opacity-50 text-end">${{ budget.amount - budget.spent }} remaining</p>
             </div>
             <div class="text-center">
-                <button v-if="!wantDelete" class="btn btn-lg py-2 text-light" :style="{ backgroundColor: budget.color}" @click="Router.push({name: 'budget', params: {id: budget.id}})">
+                <button v-if="!wantDelete" class="style btn btn-lg py-2 text-light" :style="{ backgroundColor: budget.color}" @click="Router.push({name: 'budget', params: {id: budget.id}})">
                     View Details
                     <i class="bi bi-cash-coin ms-1"></i>
                 </button>
-                <button v-else class="btn text-light btn-lg py-2" :style="{ backgroundColor: budget.color }" @click="budgetStore.deleteBudget(budget.id)">
+                <button v-else class="style btn text-light btn-lg py-2" :style="{ backgroundColor: budget.color }" @click="budgetStore.deleteBudget(budget.id)">
                     Delete Budget
                     <i class="bi bi-trash3"></i>
                 </button>
@@ -28,7 +28,6 @@
 
 <script setup lang="ts">
 import type { budgetType } from '@/types/budgetTypes';
-import { RouterLink } from 'vue-router';
 import { useBudgetStore } from '@/stores/budgetStore';
 import { useRouter } from 'vue-router';
 

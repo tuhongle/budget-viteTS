@@ -16,6 +16,8 @@ export const useBudgetStore = defineStore('budget', () => {
 //? Authentication
     const Router = useRouter();
     const isNewAccount = ref<boolean>(false);
+    const isWrongPass = ref<boolean>(false);
+    const needLogInAgain = ref<boolean>(false);
     const isAuth = ref<boolean>(false);
     const mail = ref<string>('');
     const pass = ref<string>('');
@@ -38,19 +40,23 @@ export const useBudgetStore = defineStore('budget', () => {
             await signInWithEmailAndPassword(auth, mail.value, pass.value);
             oldUser.value = true;
             toast.success(`Welcome, ${mail.value}`)
-            
         }
         catch (err : any) {
             if (err.code === 'auth/user-not-found') {
                 isNewAccount.value = true;
+                isWrongPass.value = false;
+            } else if (err.code === 'auth/wrong-password'){
+                isNewAccount.value = false;
+                isWrongPass.value = true;
             }
         }
     }
     
     const logOut = async () => {
         try {
+            confirm('You wanna sign out?');
             await signOut(auth);
-            toast.error('You has signed out!')
+            toast.error('You have signed out!')
         }
         catch (err) {
             console.log(err);
@@ -59,12 +65,17 @@ export const useBudgetStore = defineStore('budget', () => {
 
     const deleteAccount = async () => {
         try {
+            confirm('Delete user and all data?');
             const user = auth.currentUser;
             await deleteUser(user!);
             toast.error("You've delete your account!");
         }
-        catch (err) {
-            console.log(err);
+        catch (err: any) {
+            if (err.code === 'auth/requires-recent-login') {
+                needLogInAgain.value = true;
+            } else {
+                console.log(err)
+            }
         }
     }
 
@@ -83,6 +94,9 @@ export const useBudgetStore = defineStore('budget', () => {
         pass.value = '';
         isAuth.value = false;
         oldUser.value = true;
+        isWrongPass.value = false;
+        isNewAccount.value = false;
+        needLogInAgain.value = false;
     }
 
 //? Budgets
@@ -166,6 +180,7 @@ export const useBudgetStore = defineStore('budget', () => {
 
     const deleteBudget = async(id: string) => {
         try {
+            confirm('Are you sure you want to permanently delete this budget?');
             const docRef = doc(db, "budgets", id);
             await deleteDoc(docRef);
             Router.push('/');
@@ -274,7 +289,7 @@ export const useBudgetStore = defineStore('budget', () => {
     }
 
     return {
-        isNewAccount, isAuth, mail, pass, currentUser, oldUser, createAccount, logIn, deleteAccount, logOut
+        isNewAccount, isWrongPass, needLogInAgain, isAuth, mail, pass, currentUser, oldUser, createAccount, logIn, deleteAccount, logOut
         , budgets, budgetAmount, budgetName, budgetsNameList, budgetChoose, budgetDetail, createBudget, getBudgets, getBudget, deleteBudget, resetInput
         , expenses, expenseAmount, expenseName, addExpense, getExpenses, deleteExpense, addExpenseOnDetail, deleteExpenseOnDetail
     }

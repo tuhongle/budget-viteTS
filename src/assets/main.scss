@@ -6,3 +6,10 @@ $font-family-base: 'Poppins', sans-serif;
 $bootstrap-icons-font-dir: "bootstrap-icons/font/fonts";
 @import "bootstrap-icons/font/bootstrap-icons.scss";
 
+.style.btn {
+    &:hover {
+        outline: 3px solid white;
+        box-shadow: 0 0 3px 5px rgba(255, 69, 69, 0.5);
+    }
+}
+
